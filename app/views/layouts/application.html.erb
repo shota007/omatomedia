@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ja" data-bs-theme="auto" >
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+  <%= javascript_importmap_tags %>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+  <script src="https://kit.fontawesome.com/4535843fc0.js" crossorigin="anonymous"></script>
+  <link rel="icon" type="image/png" href="/favicon_miyacco.png" sizes="16x16">
+  <title>Miyacco - casual but useful news around the world</title>
+</head>
+
+<body class="wrapper">
+
+    <% if current_page?(login_path)||current_page?(new_user_path) %>
+      <div class="d-flex align-items-center justify-content-center text-center">
+        <%= yield %>
+      </div>
+    <% else %>
+    <%# nav bar %>
+    <nav class="navbar navbar-expand-md navbar-dark bg-dark" aria-label="Fourth navbar example">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="/">Obrest</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsExample04" aria-controls="navbarsExample04" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarsExample04">
+          <ul class="navbar-nav me-auto mb-2 mb-md-0">
+            <%# <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false">Dropdown</a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#">Action</a></li>
+                <li><a class="dropdown-item" href="#">Another action</a></li>
+                <li><a class="dropdown-item" href="#">Something else here</a></li>
+              </ul>
+            </li> %>
+          </ul>
+          <form class="me-2" role="search">
+            <input class="form-control" type="search" placeholder="Search" aria-label="Search">
+          </form>
+          <div>
+              <% if logged_in? %>
+                <div class="dropdown">
+                  <a href="/" class="d-flex align-items-center link-body-emphasis text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <div class="me-2">
+                      <% if current_user.avatar.attached? %>
+                        <%= image_tag(current_user.avatar, class: "rounded-circle") %>
+                      <% else %>
+                        <%= image_tag("noimage.png", size: "32x32", class: "rounded-circle") %>
+                      <% end %>
+                    </div>
+                    <strong><%= current_user.name %></strong>
+                  </a>
+                  <ul class="dropdown-menu text-small shadow">
+                    <li><%= link_to "My page", user_path(current_user), class: "dropdown-item" %></li>
+                    <li><%= link_to "Sign Out", logout_path, class: "dropdown-item", data: { turbo_method: :delete } %></li>
+                  </ul>
+                </div>
+              <% elsif current_page?(login_path) %>
+                <%= link_to "Create new account", new_user_path, class: "nav-link" %>
+              <% else %>
+                <%= link_to "Login", login_path, class: "nav-link" %>
+              <% end %>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+  <div class="row">
+
+    <%# saide bar %>
+    <div class="col-3 card mt-3 p-2 ">
+      <div class="d-flex flex-column flex-shrink-0 p-3">
+          <ul class="nav nav-pills flex-column mb-auto">
+            <li class="nav-item">
+            <% if current_page?('/') %>
+              <a href="/" class="nav-link active link-body-emphasis">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-house" viewBox="0 0 16 16">
+                <path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L2 8.207V13.5A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V8.207l.646.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.707 1.5ZM13 7.207V13.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V7.207l5-5 5 5Z"/>
+                </svg>
+                Home
+              </a>
+            <% else %>
+              <a href="/" class="nav-link link-body-emphasis">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-house" viewBox="0 0 16 16">
+                <path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L2 8.207V13.5A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V8.207l.646.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.707 1.5ZM13 7.207V13.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V7.207l5-5 5 5Z"/>
+                </svg>
+                Home
+              </a>
+            <% end %>
+            </li>
+            <li class="nav-item">
+              <% if current_page?('/contents/1') %>
+                <a href="/contents/1" class="nav-link active link-body-emphasis">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-newspaper" viewBox="0 0 16 16">
+                    <path d="M0 2.5A1.5 1.5 0 0 1 1.5 1h11A1.5 1.5 0 0 1 14 2.5v10.528c0 .3-.05.654-.238.972h.738a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 1 1 0v9a1.5 1.5 0 0 1-1.5 1.5H1.497A1.497 1.497 0 0 1 0 13.5v-11zM12 14c.37 0 .654-.211.853-.441.092-.106.147-.279.147-.531V2.5a.5.5 0 0 0-.5-.5h-11a.5.5 0 0 0-.5.5v11c0 .278.223.5.497.5H12z"/>
+                    <path d="M2 3h10v2H2V3zm0 3h4v3H2V6zm0 4h4v1H2v-1zm0 2h4v1H2v-1zm5-6h2v1H7V6zm3 0h2v1h-2V6zM7 8h2v1H7V8zm3 0h2v1h-2V8zm-3 2h2v1H7v-1zm3 0h2v1h-2v-1zm-3 2h2v1H7v-1zm3 0h2v1h-2v-1z"/>
+                  </svg>
+                    Topics
+                </a>
+              <% else %>
+                <a href="/contents/1" class="nav-link link-body-emphasis">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-newspaper" viewBox="0 0 16 16">
+                    <path d="M0 2.5A1.5 1.5 0 0 1 1.5 1h11A1.5 1.5 0 0 1 14 2.5v10.528c0 .3-.05.654-.238.972h.738a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 1 1 0v9a1.5 1.5 0 0 1-1.5 1.5H1.497A1.497 1.497 0 0 1 0 13.5v-11zM12 14c.37 0 .654-.211.853-.441.092-.106.147-.279.147-.531V2.5a.5.5 0 0 0-.5-.5h-11a.5.5 0 0 0-.5.5v11c0 .278.223.5.497.5H12z"/>
+                    <path d="M2 3h10v2H2V3zm0 3h4v3H2V6zm0 4h4v1H2v-1zm0 2h4v1H2v-1zm5-6h2v1H7V6zm3 0h2v1h-2V6zM7 8h2v1H7V8zm3 0h2v1h-2V8zm-3 2h2v1H7v-1zm3 0h2v1h-2v-1zm-3 2h2v1H7v-1zm3 0h2v1h-2v-1z"/>
+                  </svg>
+                    Topics
+                </a>
+              <% end %>
+            </li>
+            <li class="nav-item">
+              <a href="#" class="nav-link link-body-emphasis">
+                <svg class="bi pe-none me-2" width="16" height="16"><use xlink:href="#table"/></svg>
+                Latest
+              </a>
+            </li>
+            <li>
+              <a href="#" class="nav-link link-body-emphasis">
+                <svg class="bi pe-none me-2" width="16" height="16"><use xlink:href="#grid"/></svg>
+                Events
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="#" class="nav-link link-body-emphasis">
+                <svg class="bi pe-none me-2" width="16" height="16"><use xlink:href="#people-circle"/></svg>
+                Travel
+              </a>
+            </li>
+          </ul>
+      </div>
+    </div>
+    <div class="col-9">
+      <%# deivseのフラッシュメッセージを表示 %>
+      <% flash.each do |message_type, message| %>
+        <div class="alert alert-<%= message_type %>"><%= message %></div>
+      <% end %>
+      <%= yield %>
+    </div>
+
+
+  </div>
+
+  <% end %>
+</body>
+
+<footer class="footer">
+  <div class="container">
+    <p class="text-muted text-center mt-2">all rights reserved by MeRock</p>
+  </div>
+</footer>
+
+</html>
