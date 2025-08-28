@@ -1,0 +1,13 @@
+<!-- app/views/shared/_categories_sidebar.html.erb -->
+<div class="sidebar">
+  <ul class="nav nav-pills flex-column">
+    <li class="nav-item mb-2">
+      <%= link_to "All", contents_path, class:"nav-link #{'active' if params[:category_id].blank?}" %>
+    </li>
+    <% @categories.each do |c| %>
+      <li class="nav-item mb-2">
+        <%= link_to c.name, contents_path(category_id: c.id), class:"nav-link #{'active' if params[:category_id].to_i == c.id}" %>
+      </li>
+    <% end %>
+  </ul>
+</div>

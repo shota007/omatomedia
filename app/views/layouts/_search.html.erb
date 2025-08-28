@@ -1,0 +1,8 @@
+<%= form_with url: contents_path, local: true, method: :get do |f| %>
+  <div class="input-group rounded-pill overflow-hidden" style="max-width:500px;">
+    <span class="input-group-text bg-white border-0" style="opacity:0.8;">
+      <i class="fa-solid fa-magnifying-glass text-muted"></i>
+    </span>
+    <%= f.text_field :word, class: "form-control border-0", placeholder: "Search", autocomplete: "off", style: "opacity:0.8;" %>
+  </div>
+<% end %>

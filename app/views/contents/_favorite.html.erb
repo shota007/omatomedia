@@ -1,0 +1,22 @@
+<%# app/views/contents/_favorite.html.erb %>
+<% favored = current_user&.favorites&.exists?(content: content) %>
+
+<div style="display: inline-flex; align-items: center; gap: 4px;">
+  <% if favored %>
+    <%= button_to "★",
+          content_favorite_path(content),
+          method: :delete,
+          form: { data: { turbo_stream: true } },
+          class: "func_btn" %>
+  <% else %>
+    <%= button_to "☆",
+          content_favorite_path(content),
+          method: :post,
+          form: { data: { turbo_stream: true } },
+          class: "func_btn" %>
+  <% end %>
+
+  <span style="font-size: 12px; color: #555;">
+    <%= content.favorites.count %>
+  </span>
+</div>

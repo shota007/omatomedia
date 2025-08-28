@@ -1,0 +1,28 @@
+ja:
+  activerecord:
+    attributes:
+      user:
+        name: "ユーザー名"
+        password: "パスワード"
+        password_confirmation: "パスワード確認"
+        email: "メールアドレス"
+    errors:
+      messages:
+        invalid: "%{attribute}が正しくありません。"
+        blank: "%{attribute}を入力してください。"
+        too_short: "%{attribute}は%{count}文字以上で入力してください。"
+    attributes:
+      content:
+        title: "タイトル"
+        img_file: "画像"
+        audio_file: "音声"
+    errors:
+      messages:
+        invalid: "%{attribute}が正しくありません。"
+        blank: "%{attribute}がありません。"
+    attributes:
+      content:
+        comment: "コメント"
+    errors:
+      messages:
+        blank: "%{attribute}がありません。"

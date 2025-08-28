@@ -1,0 +1,12 @@
+<%# app/views/contents/_user_name.html.erb %>
+<% return unless content && content.user %>
+<%= link_to user_path(content.user), class: "user-name-link d-flex align-items-center mb-2 text-decoration-none" do %>
+    <div class="content_avatar">
+        <% if content.user.avatar.attached? %>
+            <%= image_tag(content.user.avatar, size: "30x30", class: "rounded-circle d-inline-block") %>
+        <% else %>
+            <%= image_tag("noimage.png", size: "30x30", class: "rounded-circle d-inline-block") %>
+        <% end %>
+        <div class="d-inline-block px-2"><strong><%=content.user.name %></strong></div><%= up_time(content) %>
+    </div>
+<% end %>

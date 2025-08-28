@@ -1,0 +1,33 @@
+<div class="d-flex align-items-center" style="height: 100%;">
+	<div class="m-auto text-center" style="width: 500px;">
+		<div class="register-container">
+			<h1 class="h3 mb-3">Create account</h1>
+			<form id="sign-up-form">
+				<div class="input-gr">
+					<label for="name">Name</label>
+					<input type="name" id="name" required />
+				</div>
+				<div class="input-gr">
+					<label for="email">Email</label>
+					<input type="email" id="email" required />
+				</div>
+				<div class="input-gr">
+					<label for="password">Password</label>
+					<input type="password" id="password" required />
+				</div>
+				<div class="error_message">
+					<p id="error_message"></p>
+					<br>
+				</div>
+				<div class="button-gr">
+					<button type="submit">Sign Up</button>
+				</div>
+			</form>
+				<br>
+				<div id="firebaseui-auth-container"></div>
+				<br>
+				<%= link_to "ログイン", login_path, style: "text-decoration:none; font-size: 14px;", class: "text-center my-3"%>
+			</div>
+		</div>
+	</div>
+</div>

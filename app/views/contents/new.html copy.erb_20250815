@@ -1,0 +1,122 @@
+<div class="m-auto" style="width: 500px;">
+    <h3 class="fw-bold text-center">コンテンツを登録</h3>
+    <%# YoutubeからDL %>
+    <p class="mt-5 text-center" style="font-weight:bold; font-size: 20px;" >Youtubeから要約を取得する</p>
+    <div class="my-4 text-center">
+        <%= form_with url: new_content_path, method: :get, local: true, class: "g-2 align-items-center" do |f| %>
+        <%= f.url_field :youtube_url, name: :youtube_url,  value: params[:youtube_url], class: "form-control mb-2", placeholder: "YouTube の URL を貼り付けて「取得」を押す" %>
+        <%= f.submit "取得", class: "btn btn-secondary w-50 my-4" %>
+        <% end %>
+    </div>
+    <%= form_with model: @content, id: "content-form", html: { multipart: true, class: "needs-validation", novalidate: true }, local: false do |f| %>
+        <%= f.hidden_field :youtube_url %>
+        <%= f.hidden_field :youtube_id,  value: @youtube_id %>
+        <div id="form-errors" class="alert alert-danger d-none"></div>
+
+        <%# サムネイル %>
+         <div id="file-preview2">
+            <% if @thum_path.present? %>
+                <%= image_tag(@thum_path, size: "480x320") %>
+                <%= f.hidden_field :youtube_id, value: @youtube_id %>
+            <% else %>
+                <%= image_tag("no-thum.png", size: "480x320") %>
+            <% end %>
+        </div>
+
+        <%= form_with model: @content, id: "content-form", local: true do |f| %>
+        <%= f.hidden_field :youtube_url, value: @content.youtube_url %>
+        <%= f.hidden_field :youtube_id,  value: @youtube_id %>
+        <%= f.label :title, "タイトル", class: "mt-4" %>
+        <%= f.text_field   :title,       value: (@youtube_title || ""), class: "form-control", required: true %>
+        <%= f.label :category_id, "カテゴリー", class: "mt-4" %>
+        <%= f.collection_select :category_id, @categories, :id, :name, { prompt: "選択してください" }, { class: "form-select", required: true } %>
+        <%= f.label :tag_list, "ハッシュタグ", class: "mt-4" %>
+        <%= f.text_field :tag_list, value: Array(f.object&.tag_list).join(", "), class: "form-control", placeholder: "カンマ区切りで #なし" %>
+
+        <!-- intent をトップレベルで送る（content外） -->
+        <input type="hidden" name="intent" value="summarize">
+
+        <div class="text-center">
+            <button type="submit" class="btn btn-secondary mt-4 w-50" id="summarize-btn">
+            要約を取得する
+            </button>
+        </div>
+        <% end %>
+
+        <div class="d-flex justify-content-center">
+            <button type="button" id="open-confirm-btn" class="btn btn-secondary mt-5 w-50">投稿する</button>
+        </div>
+    <% end %>
+
+    <%# modal content %>
+    <div class="modal fade" id="exampleModal1" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <%= form_with  url: '/contents/new', method: :get do |form| %>
+                    <div class="modal-body">
+                        <p class="text-center">Youtubeからタイトルとサムネイルおよび音声を取得</p>
+                        <%= form.text_field :youtube_url, class: "form-control", required: true %>
+                        <div class="d-flex justify-content-center gap-3 mt-3">
+                            <%= form.submit "取得する", class:"btn btn-secondary btn-sm w-25 m-3" %>
+                            <button type="button" class="btn btn-light btn-sm w-25 m-3" data-bs-dismiss="modal">戻る</button>
+                        </div>
+                    </div>
+                <% end %>
+            </div>
+        </div>
+    </div>
+    <div class="text-center mt-3">
+    <a href="javascript:history.back()" class="text-dark" >戻る</a>
+    </div>
+
+    <!-- 確認モーダル -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center">本当に投稿しますか？</div>
+                <div class="modal-footer d-flex justify-content-center gap-3">
+                    <button type="button" class="btn btn-secondary" id="confirm-submit-btn">はい</button>
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">キャンセル</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const form         = document.getElementById("content-form");
+        const openBtn      = document.getElementById("open-confirm-btn");
+        const submitBtn    = document.getElementById("confirm-submit-btn");
+        const errorBox     = document.getElementById("form-errors");
+        const spinner      = document.getElementById("submit-spinner");
+        const confirmModal = new bootstrap.Modal(document.getElementById("confirmModal"));
+
+        // 「投稿する」クリック時：バリデーション→モーダル表示
+        openBtn.addEventListener("click", (e) => {
+        if (!form.checkValidity()) {
+            e.preventDefault();
+            e.stopPropagation();
+            form.classList.add("was-validated");
+            const msgs = Array.from(form.elements)
+            .filter(el => el.willValidate && !el.checkValidity())
+            .map(el => el.validationMessage);
+            errorBox.innerHTML = "<ul><li>" + msgs.join("</li><li>") + "</li></ul>";
+            errorBox.classList.remove("d-none");
+        } else {
+            errorBox.classList.add("d-none");
+            confirmModal.show();
+        }
+        });
+
+        // モーダル内「はい」クリック時：モーダルを閉じ、スピナーを出してフォーム送信
+        submitBtn.addEventListener("click", () => {
+        // モーダルを閉じる
+        confirmModal.hide();
+        // プログレスバー（スピナー）を表示
+        spinner.classList.remove("d-none");
+        // 実際にフォームを送信
+        form.submit();
+        });
+    });
+    </script>
+</div>

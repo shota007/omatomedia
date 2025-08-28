@@ -1,0 +1,6 @@
+<%# app/views/contents/index.html %>
+<% @contents.each do |content| %>
+  <div class="each_content m-auto p-3" style="width: 500px;">
+    <%= render partial: "contents/content", collection: @contents, as: :content %>
+  </div>
+<% end %>

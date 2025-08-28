@@ -1,0 +1,189 @@
+# /app/controllers/contents_controller.rb
+class ContentsController < ApplicationController
+  before_action :logged_in_user, only:[:new, :edit, :update, :destroy]
+  before_action :content_user, only:[:edit, :update, :destroy]
+  before_action :set_categories, only: [:index]
+  require 'google/apis/youtube_v3'
+  require 'open-uri'
+  require 'open3'
+
+  def index
+    scope = Content.all
+    scope = scope.looks(params[:word]) if params[:word].present?
+    scope = scope.where(category_id: params[:category_id]) if params[:category_id].present?
+    @contents = scope.order(created_at: :desc)
+  end
+
+  def new
+    @content       = Content.new
+    @youtube_title = nil
+    @thum_path     = nil
+  
+    if params[:youtube_url].present?
+      @content.youtube_url = params[:youtube_url]
+      youtube_id = CGI.parse(URI(@content.youtube_url).query)["v"].first
+      svc = Google::Apis::YoutubeV3::YouTubeService.new
+      svc.key = ENV["GOOGLE_CLIENT_API_KEY"]
+      snippet = svc.list_videos(:snippet, id: youtube_id).items.first.snippet 
+      @youtube_id    = youtube_id
+      @youtube_title = snippet.title
+      @thum_path     = "https://img.youtube.com/vi/#{youtube_id}/hqdefault.jpg"
+    end
+  end
+  
+
+  def create
+  @content = current_user.contents.new(content_params)
+  ensure_default_category(@content) # or モデルで before_validation
+
+  if summarize_request?
+    @content.save!(validate: false)
+    youtube_id = @content.youtube_id.presence || (CGI.parse(URI(@content.youtube_url).query)['v'].first rescue nil)
+
+
+    # サムネ取得
+    if youtube_id.present?
+      begin
+        io = URI.open("https://img.youtube.com/vi/#{youtube_id}/hqdefault.jpg")
+        @content.img_file.attach(io: io, filename: "#{youtube_id}.jpg", content_type: "image/jpeg")
+      rescue => e
+        Rails.logger.warn("[thumb] #{e.class}: #{e.message}")
+      end
+    end
+  # ===== 音声DL（yt-dlpに任せてwav化） =====
+    audio_attached = false
+  begin
+    Dir.mktmpdir do |dir|
+      # Androidクライアントを使うとSABRを回避しやすい
+      # wavへ一発変換、ファイル名はID.wav
+      system('yt-dlp', '--no-playlist', '--extract-audio', '--audio-format', 'wav', '--audio-quality', '0', '--output', File.join(dir, '%(id)s.%(ext)s'), '--extractor-args', 'youtube:player_client=android', @content.youtube_url )
+
+      downloaded = Dir[File.join(dir, "#{youtube_id}.wav")].first ||
+                   Dir[File.join(dir, '*.wav')].first
+      if downloaded && File.exist?(downloaded)
+        @content.audio_file.attach(io: File.open(downloaded), filename: File.basename(downloaded), content_type: 'audio/wav')
+        audio_attached = true
+      end
+    end
+  rescue => e
+    Rails.logger.warn("[audio] #{e.class}: #{e.message}")
+  end
+  # attach 失敗ならここで終了（要約は進めない）
+  unless audio_attached
+    flash.now[:danger] = "音声の取得に失敗しました。動画URLを変えるか、後でもう一度お試しください。"
+    return render :new, status: :unprocessable_entity
+  end
+
+
+  # ===== 文字起こし＆要約 =====
+  begin
+    @content.audio_file.blob.open do |file|
+      transcript = transcribe(file.path)
+      summary    = summarize(transcript)
+      @content.transcribed_text = transcript
+      @content.summarized_text  = summary
+    end
+  rescue => e
+    Rails.logger.error("[transcribe] #{e.class}: #{e.message}")
+    flash.now[:danger] = "文字起こしに失敗しました。時間をおいて再度お試しください。"
+    return render :new, status: :unprocessable_entity
+  end
+  # 最後に通常バリデーションで保存
+  @content.save!
+  redirect_to @content, notice: '要約を取得しました' and return
+  end
+
+rescue => e
+  logger.error e.full_message
+  @content ||= Content.new
+  flash.now[:danger] = "処理中にエラーが発生しました: #{e.message}"
+  render :new, status: :unprocessable_entity
+end
+
+  def show
+    @content = Content.find(params[:id])
+    @comment = Comment.new
+    @comments = Comment.where(content_id: @content.id)
+    @user = User.find(@content.user_id)
+  end
+
+  def share
+    @content = Content.find(params[:id])
+    @comment = Comment.new
+    @comments = Comment.where(content_id: @content.id)
+    @user = User.find(@content.user_id)
+  end
+
+  def edit
+  end
+
+  def update
+    if @content.update(content_params)
+        redirect_to content_path(@content), success:'更新しました'
+    else
+        flash.now[:danger] = '失敗しました'
+        render :edit
+    end
+  end
+
+  def destroy
+    @content.destroy!
+    redirect_to current_user, status: :see_other, success: '削除しました' 
+  end
+
+  private
+
+  def summarize_request?
+    params[:intent] == 'summarize'
+  end
+
+  def content_params
+    permitted = params.require(:content).permit(
+      :youtube_url, :youtube_id, :title, :category_id, :tag_list
+    )
+    if permitted[:tag_list].present?
+      raw  = permitted[:tag_list]
+      tags = raw.is_a?(Array) ? raw : raw.split(/[,\s]+/)
+      permitted[:tag_list] = tags.map { |t| t.to_s.sub(/\A#/, '') }
+                                 .reject(&:blank?).uniq
+    end
+    permitted
+  end
+
+  def ensure_default_category(record)
+    return if record.category_id.present?
+    default = Category.order(:position).first || Category.first
+    record.category_id = default&.id
+  end
+
+  def content_user
+    @content = Content.find(params[:id])
+    redirect_to current_user unless current_user.id == @content.user_id
+  end
+
+  def set_categories
+    @categories = Category.order(:position)
+  end
+
+  def fetch_youtube_title(video_id)
+    svc = Google::Apis::YoutubeV3::YouTubeService.new
+    svc.key = ENV['GOOGLE_CLIENT_API_KEY']
+    snippet = svc.list_videos(:snippet, id: video_id).items.first.snippet
+    snippet.title
+  end
+
+  def load_youtube(url)
+    youtube_id = CGI.parse(URI(url).query)["v"]&.first
+    return [nil, nil, nil] unless youtube_id
+
+    svc = Google::Apis::YoutubeV3::YouTubeService.new
+    svc.key = ENV["GOOGLE_CLIENT_API_KEY"]
+    snippet = svc.list_videos(:snippet, id: youtube_id).items.first&.snippet
+    title   = snippet&.title
+    thumb   = "https://img.youtube.com/vi/#{youtube_id}/hqdefault.jpg"
+    [youtube_id, title, thumb]
+  rescue => e
+    Rails.logger.warn("[load_youtube] #{e.class}: #{e.message}")
+    [youtube_id, nil, "https://img.youtube.com/vi/#{youtube_id}/hqdefault.jpg"]
+  end
+end

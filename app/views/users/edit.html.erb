@@ -1,0 +1,70 @@
+<div class="m-auto py-5" style="width: 500px;">
+  <h3 class="mt-2 fw-bold text-center">プロフィール編集</h3>
+
+	<%= form_with model: @user, local: false, html: { multipart: true } do |f| %>
+		<% if @user.errors.any? %>
+			<div class="alert alert-danger">
+				<ul>
+					<% @user.errors.full_messages.each do |msg| %>
+					<li><%= msg %></li>
+					<% end %>
+				</ul>
+			</div>
+		<% end %>
+		<div class="my-3 mx-3 text-center">
+			<div id="file-preview">
+				<% if @user.avatar.attached? %>
+					<%= image_tag @user.avatar.variant(resize_to_fill: [75,75]), class: "rounded-circle" %>
+				<% else %>
+					<%= image_tag("noimage.png", size: "75x75", class: "rounded-circle d-inline-block") %>
+				<% end %>
+			</div>
+			<% if @user.avatar.attached? %>
+				<div class="text-center my-3">
+					<button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#avatarDeleteModal">
+						<i class="fa-solid fa-trash"></i> アイコンを削除
+					</button>
+				</div>
+			<% end %>
+		</div>
+
+		<div class="d-flex align-items-center mt-5 mb-3">
+			<%= f.label :avatar, "アイコン選択", class: "me-3 w-25 text-end" %>
+			<%= f.file_field :avatar, direct_upload: true, data: { target: '#preview-target', max_file_size: 5.megabytes },	accept: "image/png,image/gif,image/jpeg", class: "form-control js-file-select-preview" %>
+			<%= f.hidden_field :user_image_cache %>
+		</div>
+
+		<div class="d-flex align-items-center mb-3">
+			<%= f.label :name, "ユーザー名", class: "me-3 w-25 text-end" %>
+			<%= f.text_field :name, class: "form-control flex-grow-1", placeholder: "User Name", required: true %>
+		</div>
+		<div class="d-flex align-items-center mb-3">
+			<%= f.label :email, "email", class: "me-3 w-25 text-end" %>
+			<%= f.text_field :email, class: "form-control flex-grow-1", placeholder: "Mail address", required: true, pattern: "[^@\\s]+@[^@\\s]+\\.[^@\\s]+",
+        title: "有効なメールアドレスを入力してください（例: user@example.com）" %>
+		</div>
+		<div class="d-flex align-items-center mb-3">
+			<%= f.label :youtube_url, "YouTube URL", placeholder: "https://www.youtube.com/@xxxxxxx", class: "me-2 w-25 text-end" %>
+			<%= f.text_field :youtube_url, class: "form-control flex-grow-1" %>
+		</div>
+			<div class="d-flex justify-content-center gap-2 mt-5">
+				<%= f.submit "保存", class:"btn btn-secondary w-25" %>
+				<%= link_to "戻る", :back, class: "btn btn-light w-25" %>
+		</div>
+	<% end %>
+
+	<!-- アイコン削除確認モーダル -->
+	<div class="modal fade" id="avatarDeleteModal" tabindex="-1" aria-labelledby="avatarDeleteModalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content">
+				<div class="modal-body text-center">アイコンを削除しますか？</div>
+				<div class="modal-footer d-flex justify-content-center gap-3">
+					<button type="button" class="btn btn-light"	data-bs-dismiss="modal">キャンセル</button>
+					<%= button_to remove_avatar_user_path(@user), method: :delete, form: { data: { turbo_stream: true } }, class: "btn btn-danger", data: { "bs-dismiss": "modal" } do %>
+					削除する
+					<% end %>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

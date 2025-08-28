@@ -1,0 +1,47 @@
+<div class="m-auto" style="max-width: 800px;">
+  <h3 class="fw-bold text-center">要約プレビュー</h3>
+
+  <div class="text-center my-3">
+    <% if @thum_path.present? %>
+      <%= image_tag @thum_path, size: "480x320" %>
+    <% end %>
+  </div>
+
+  <dl class="row">
+    <dt class="col-sm-2">タイトル</dt>
+    <dd class="col-sm-10"><%= @content.title %></dd>
+    <dt class="col-sm-2">カテゴリー</dt>
+    <dd class="col-sm-10"><%= Category.find_by(id: @content.category_id)&.name %></dd>
+  </dl>
+
+  <h5 class="mt-4">要約</h5>
+  <div class="p-3 border rounded bg-light">
+    <%= simple_format(@content.summarized_text.to_s) %>
+  </div>
+
+  <details class="mt-3">
+    <summary>全文（文字起こし）</summary>
+    <div class="mt-2 p-3 border rounded">
+      <%= simple_format(@content.transcribed_text.to_s) %>
+    </div>
+  </details>
+
+  <!-- ステップ3：ここで初めて保存 -->
+  <%= form_with model: @content, url: contents_path, method: :post, local: true do |f| %>
+    <%= f.hidden_field :youtube_url,       value: @content.youtube_url %>
+    <%= f.hidden_field :youtube_id,        value: @content.youtube_id %>
+    <%= f.hidden_field :title,             value: @content.title %>
+    <%= f.hidden_field :category_id,       value: @content.category_id %>
+    <%= f.hidden_field :tag_list,          value: Array(@content.tag_list).join(",") %>
+    <%= f.hidden_field :transcribed_text,  value: @content.transcribed_text %>
+    <%= f.hidden_field :summarized_text,   value: @content.summarized_text %>
+
+    <div class="text-center mt-4">
+      <%= f.submit "投稿する", class: "btn btn-primary w-50" %>
+    </div>
+  <% end %>
+
+  <div class="text-center my-3">
+    <%= link_to "戻る", new_content_path(youtube_url: @content.youtube_url), class: "btn btn-link" %>
+  </div>
+</div>

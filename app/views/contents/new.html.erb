@@ -1,0 +1,57 @@
+<div class="m-auto" style="width: 500px;">
+  <h3 class="fw-bold text-center">コンテンツを登録</h3>
+
+  <%# ===== ステップ1：URL入力（プレビューが無い時だけ表示） ===== %>
+  <% if @youtube_title.blank? && @thum_path.blank? %>
+    <p class="mt-5 text-center fw-bold fs-5">Youtubeから要約を取得する</p>
+    <div class="my-4 text-center">
+      <%= form_with url: new_content_path, method: :get, local: true, class: "g-2 align-items-center" do |f| %>
+        <%= f.url_field :youtube_url,
+                        name: :youtube_url,
+                        value: params[:youtube_url],
+                        class: "form-control mb-2",
+                        placeholder: "YouTube の URL を貼り付けて「取得」を押す" %>
+        <%= f.submit "取得", class: "btn btn-secondary w-50 my-4" %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%# ===== ステップ2：プレビュー表示（出てる時だけ表示） ===== %>
+  <% if @youtube_title.present? || @thum_path.present? %>
+    <%= form_with url: preview_summary_contents_path, method: :post, scope: :content, local: true do |f| %>
+      <%= f.hidden_field :youtube_url, value: @content.youtube_url %>
+      <%= f.hidden_field :youtube_id,  value: @youtube_id %>
+
+      <div class="text-center mb-3">
+        <% if @thum_path.present? %>
+          <%= image_tag @thum_path, size: "480x320" %>
+        <% else %>
+          <%= image_tag "no-thum.png", size: "480x320" %>
+        <% end %>
+      </div>
+
+      <div class="mb-3">
+        <%= f.label :title, "タイトル" %>
+        <%= f.text_field :title, value: (@youtube_title || ""), class: "form-control", required: true %>
+      </div>
+
+      <div class="mb-3">
+        <%= f.label :category_id, "カテゴリー" %>
+        <%= f.collection_select :category_id, @categories, :id, :name, { prompt: "選択してください" }, { class: "form-select", required: true } %>
+      </div>
+
+      <div class="mb-3">
+        <%= f.label :tag_list, "ハッシュタグ" %>
+        <%= f.text_field :tag_list, value: Array(@content&.tag_list).join(", "), class: "form-control", placeholder: "カンマ区切りで #なし" %>
+      </div>
+
+      <div class="text-center mb-3">
+        <%= f.submit "要約を取得する", class: "btn btn-secondary w-50" %>
+      </div>
+
+      <div class="text-center mb-3">
+        <%= link_to "戻る", "javascript:history.back()", class: "text-muted" %>
+      </div>
+    <% end %>
+  <% end %>
+</div>

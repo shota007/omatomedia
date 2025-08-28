@@ -1,0 +1,53 @@
+<div class="m-auto py-5" style="width: 500px;">
+    <h3 class="mt-2 fw-bold text-center">コンテンツを編集</h3>
+        <%= form_with model: @content do |f| %>
+            <% if @content.errors.any? %>
+                <div class="alert alert-danger">
+                    <ul>
+                        <% @content.errors.full_messages.each do |msg| %>
+                        <li><%= msg %></li>
+                        <% end %>
+                    </ul>
+                </div>
+            <% end %>
+            <%= f.label :タイトル, class: "mt-5 fw-bold" %>
+            <%= f.text_field :title, class: "form-control", required: true %>
+            <!-- 既存サムネイルの表示 & 削除チェック -->
+            <% if @content.img_file.attached? %>
+                <div class="mb-3">
+                            <%= f.label :サムネイル, class: "mt-5 fw-bold" %>
+                    <%= image_tag @content.img_file, size: "480x320", class: "mb-2 content_imag" %><br>
+                    <%# <div class="form-check">
+                        <%= f.check_box :remove_img_file, class: "form-check-input" %>
+                        <%# <%= f.label      :remove_img_file, "サムネイルを削除", class: "form-check-label" %>
+                    <%# </div> %>
+                </div>
+            <% end %>
+
+            <%# <%= f.label :新しいサムネイルを選ぶ %>
+            <%# <%= f.file_field :img_file, class: "form-control mt-3" %>
+            <%= f.label :要約, class: "mt-5 fw-bold" %>
+            <%= f.text_area :summarized_text, class: "form-control", size:"100x10", required: true %>
+            <%= f.label :全文, class: "mt-5 fw-bold" %>
+            <%= f.text_area :transcribed_text, class: "form-control", id: "transcribed_text", style: "overflow:hidden; min-height:100px;", required: true %>
+            <br>
+            <div class="form-group row justify-content-center mb-3">
+                <%= link_to "戻る", :back, class: "btn btn-light btn-sm w-25 m-3" %>
+                <%= f.submit "変更", class: "btn btn-secondary btn-sm m-3 w-25" %>
+            </div>
+        <% end %>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const textarea = document.getElementById("transcribed_text");
+  if (textarea) {
+    const resize = () => {
+      textarea.style.height = "auto"; // 高さをリセット
+      textarea.style.height = textarea.scrollHeight + "px"; // 必要な高さに再設定
+    };
+    textarea.addEventListener("input", resize);
+    resize(); // ページ読み込み時にも実行（既存テキストがある場合）
+  }
+});
+</script>

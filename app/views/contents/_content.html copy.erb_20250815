@@ -1,0 +1,61 @@
+<%# contents/_content.html.erb %>
+<%= link_to content_path(content), class: "link" do %>
+    <%= render "contents/user_name", content: content %>
+    <h3><%= content.title %></h3>    
+    <div class="content_sumtext">
+        <div class="d-flex my-3">
+          <div class="yt-thumb-wrapper">
+            <% if content.img_file.attached? %>
+                <%= image_tag url_for(content.img_file), class: "yt-thumb" %>
+            <% elsif content.youtube_id.present? %>
+                <%= image_tag "https://img.youtube.com/vi/#{content.youtube_id}/hqdefault.jpg", class: "yt-thumb" %>
+            <% else %>
+                <%= image_tag "no-thum.png", class: "content_image" %>
+            <% end %>
+          </div>
+        </div>
+        <% if show_summary %>
+        <% else %>
+          <div class="content_sumtext">
+            <!-- プレビュー表示（要約 or 文字起こしの先頭120文字） -->
+            <p id="preview">
+                <%= truncate(@content.summarized_text.presence || @content.transcribed_text, length: 200) %>
+                <%= link_to "全文を読む", "#", class: "toggle-full link-primary" %>
+            </p>
+            <!-- 全文（文字起こし）を最初は隠しておく -->
+            <div id="full_text" style="display: none;">
+                <%= simple_format(@content.transcribed_text) %>
+                <%= link_to "プレビューに戻す", "#", class: "toggle-full link-primary" %>
+            </div>
+          </div>
+        <% end %>
+        <p>
+          <% @content.tag_list.each do |tag| %>
+            <%= link_to "##{h tag}", contents_path(tag: tag), class: "badge bg-secondary me-1" %>
+          <% end %>
+        </p>
+    </div>
+    <%= render partial: "contents/func_btn", locals: {content: content} %>
+<% end %>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    var preview  = document.getElementById("preview");
+    var fullText = document.getElementById("full_text");
+
+    document.querySelectorAll(".toggle-full").forEach(function(link) {
+      link.addEventListener("click", function(e) {
+        e.preventDefault();
+        if (preview.style.display === "none") {
+          // 現在全文表示 → プレビュー表示に戻す
+          preview.style.display  = "block";
+          fullText.style.display = "none";
+        } else {
+          // 現在プレビュー表示 → 全文表示
+          preview.style.display  = "none";
+          fullText.style.display = "block";
+        }
+      });
+    });
+  });
+</script>

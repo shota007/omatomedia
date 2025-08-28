@@ -1,0 +1,66 @@
+<%# app/views/contents/_content.html.erb %>
+<% show_full = local_assigns.fetch(:show_full, false) %>
+<% uid = dom_id(content, :card) %>
+
+<div class="content-card position-relative" id="<%= uid %>">
+  <%= render "contents/user_name", content: content %>
+
+  <h3 class="mb-2">
+    <% if show_full %>
+      <span class="text-dark text-decoration-none"><%= content.title %></span>
+    <% else %>
+      <%= link_to content.title, content_path(content), class: "text-decoration-none text-dark" %>
+    <% end %>
+  </h3>
+
+  <div class="content_sumtext">
+    <div class="d-flex my-3">
+      <div class="yt-thumb-wrapper">
+        <% thumb =
+            if content.img_file.attached?
+              url_for(content.img_file)
+            elsif content.youtube_id.present?
+              "https://img.youtube.com/vi/#{content.youtube_id}/hqdefault.jpg"
+            else
+              asset_path("no-thum.png")
+            end %>
+
+        <% if show_full %>
+          <%= image_tag thumb, class: (content.youtube_id.present? ? "yt-thumb" : "content_image") %>
+        <% else %>
+          <%= link_to content_path(content) do %>
+            <%= image_tag thumb, class: (content.youtube_id.present? ? "yt-thumb" : "content_image") %>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+
+    <% if show_full %>
+      <!-- 詳細ページ：常に全文（transcribed_text 優先、無ければ summarized_text） -->
+      <div class="full-text">
+        <p>＜全文＞</p>
+        <%= simple_format((content.transcribed_text.presence || content.summarized_text).to_s) %>
+      </div>
+    <% else %>
+      <!-- 一覧など：プレビューだけ -->
+      <% preview_text = content.summarized_text.presence || content.transcribed_text %>
+      <p>＜要約＞</p>
+      <p class="mb-2"><%= truncate(preview_text.to_s, length: 200) %></p>
+      <%# <%= link_to "全文を読む", content_path(content), class: "stretched-link btn btn-link p-0 align-baseline" %>
+      <%= link_to "全文を読む", content_path(content), class: "stretched-link btn btn-link p-0 align-baseline" %>
+    <% end %>
+
+    <% tags = Array(content.tag_list).reject(&:blank?) %>
+    <% if tags.any? %>
+      <p class="mb-0 mt-2 position-relative" style="z-index: 2;">
+        <% tags.each do |tag| %>
+          <%= link_to "##{tag}", contents_path(tag: tag), class: "badge bg-secondary me-1" %>
+        <% end %>
+      </p>
+    <% end %>
+  </div>
+
+  <div class="mt-2">
+    <%= render partial: "contents/func_btn", locals: { content: content } %>
+  </div>
+</div>

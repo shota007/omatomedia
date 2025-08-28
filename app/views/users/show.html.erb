@@ -1,0 +1,85 @@
+<%# app/views/users/show.html.erb %>
+<div class="d-flex align-items-center mt-4">
+  <% if @user.avatar.attached? %>
+    <%= image_tag @user.avatar.variant(resize_to_fill: [75,75]), class: "rounded-circle" %>
+  <% else %>
+    <%= image_tag("noimage.png", size: "75x75", class: "rounded-circle d-inline-block") %>
+  <% end %>
+  <div class="ms-3">
+    <h4 class="mb-1"><%= @user.name %></h4>
+    <% if logged_in? && current_user?(@user) %>
+      <p class="mb-0 text-muted"><%= @user.email %></p>
+    <% end %>
+  </div>
+</div>  
+<% if logged_in? && current_user?(@user) %>
+  <%= link_to " Edit", edit_user_path(@user), class: "func_btn link d-inline-flex align-items-center gap-1 text-secondary", style:"color: gray; font-size:12px; float: right;" %>
+<% end %>
+<br>
+<% if @user.youtube_url.present? %>
+  <%= link_to "YouTube", @user.youtube_url, target: "_blank", class: "func_btn" %><br>
+<% end %>
+<div class="text-center mt-3">
+  <%= link_to "パスワードを変更", edit_password_users_path, class: "mt-3 btn btn-outline-secondary" %>
+</div>
+
+<% if logged_in? && current_user?(@user) %>
+  <!-- タブの見出し -->
+  <ul class="nav nav-tabs justify-content-start mt-4" id="profileTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="contents-tab" data-bs-toggle="tab" data-bs-target="#contents" type="button" role="tab" aria-controls="contents" aria-selected="true">
+        User Contents
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="favorites-tab" data-bs-toggle="tab" data-bs-target="#favorites" type="button" role="tab" aria-controls="favorites" aria-selected="false">
+        My Favorites
+      </button>
+    </li>
+  </ul>
+  <!-- タブの中身 -->
+  <div class="tab-content mt-3" id="profileTabsContent">
+    <!-- My Favorites -->
+    <div class="tab-pane fade" id="favorites" role="tabpanel" aria-labelledby="favorites-tab">
+        <% @my_favorites.each do |content| %>
+          <%= render partial: "contents/user_name", locals: {content: @content} %>
+          <%= link_to content_path(content), class: "d-flex flex-column mb-3 text-decoration-none text-dark p-2 favorite-item" do %>
+            <%= render partial: "contents/content", locals: { content: content, show_summary: true } %>
+          <% end %>
+          <hr>
+        <% end %>
+    </div>
+  </div>
+<!-- User Contents -->
+<div class="tab-pane fade show active" id="contents" role="tabpanel" aria-labelledby="contents-tab">
+  <% if @my_contents.empty? %>
+    <p class="text-center my-3">まだ投稿はありません</p>
+  <% else %>
+    <% @my_contents.each do |content| %>
+      <%= link_to content_path(content), class: "d-flex flex-column mb-3 text-decoration-none text-dark p-2 favorite-item" do %>
+        <%= render "contents/content", content: content, show_summary: true %>
+      <% end %>
+
+      <div class="d-inline-flex gap-2 mb-3">
+        <%= link_to "編集", edit_content_path(content), class: "btn btn-light btn-sm" %>
+        <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal-<%= content.id %>">削除</button>
+      </div>
+
+        <!-- モーダル本体 -->
+        <div class="modal fade" id="deleteModal-<%= content.id %>" tabindex="-1" aria-labelledby="deleteModalLabel-<%= content.id %>" aria-hidden="true" >
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-body text-center">削除しますか？</div>
+              <div class="modal-footer d-flex justify-content-center gap-2">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" >キャンセル</button>
+                <%= button_to "削除する", content_path(content), method: :delete, form: { data: { turbo: false } }, class: "btn btn-danger" %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+    <hr>
+    <% end %>
+  <% end %>
+</div>

@@ -1,0 +1,26 @@
+<%# app/views/contents/_func_btn.html.erb %>
+<div class="d-flex align-items-center gap-2 my-3 position-relative flex-nowrap" style="z-index:3;">
+  <div class="func_btn d-inline-block position-relative" id="content_<%= content.id %>_favorite" style="z-index:3">
+    <%= render partial: "contents/favorite", locals: { content: content } %>
+  </div>
+
+  <div data-controller="copy"
+       class="d-inline-block"
+       data-copy-text-value="<%= share_content_url(content) %>">
+    <button type="button"
+            data-action="click->copy#copy"
+            class="func_btn"
+            data-turbo="false">
+      Share
+    </button>
+  </div>
+
+  <% if content.youtube_id.present? %>
+    <a class="func_btn d-inline-block position-relative"
+       style="z-index:3; white-space:nowrap;"
+       href="<%= "https://www.youtube.com/watch?v=#{content.youtube_id}" %>"
+       target="_blank" rel="noopener">
+      <i class="fa-brands fa-youtube"></i> Youtube
+    </a>
+  <% end %>
+</div>

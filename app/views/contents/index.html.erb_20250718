@@ -1,0 +1,8 @@
+<!-- app/views/contents/index.html.erb -->
+<div class="row">
+  <% @contents.each do |content| %>
+    <div class="col-sm-6 col-lg-4 mb-4">
+      <%= render "contents/content", content: content, show_summary: true %>
+    </div>
+  <% end %>
+</div>

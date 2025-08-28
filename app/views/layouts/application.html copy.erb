@@ -1,0 +1,108 @@
+<%# /app/views/layouts/application.html.erb %>
+<!DOCTYPE html>
+<html lang="ja" data-bs-theme="auto" class="d-flex justify-content-center">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="…" crossorigin="anonymous">
+  <!-- FontAwesome -->
+  <script src="https://kit.fontawesome.com/4535843fc0.js" crossorigin="anonymous"></script>
+  <!-- FirebaseUI CSS -->
+  <link href="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.css" rel="stylesheet">
+  <!-- Firebase compat scripts (window.firebase を定義) -->
+  <script src="https://www.gstatic.com/firebasejs/11.1.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.1.0/firebase-auth-compat.js"></script>
+  <!-- FirebaseUI -->
+  <script src="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.js"></script>
+
+  <%= javascript_importmap_tags %>
+  
+  <script type="module" src="<%= asset_path 'auth_signup_password.js' %>"></script>
+  <link rel="icon" href="/favicon.ico" sizes="16x16" type="image/png">
+  <title>Omatomedia - おまとめ情報サイト</title>
+</head>
+
+<body class="d-flex flex-column min-vh-100">
+  <% if current_page?(login_path) || current_page?(new_user_path) %>
+    <%= yield %>
+  <% else %>
+    <!-- ナビバー -->
+    <nav class="navbar fixed-top" style="background-color: #FAD02C;">
+      <div class="container-fluid d-flex justify-content-between align-items-center" style="height:50px;">
+        <!-- ① 左側：ロゴ -->
+        <%= link_to image_tag("omatome-logo2.png", size: "180x50", alt: "Omatomediaロゴ"), root_path %>
+        <!-- ② 中央：検索フォームを中央寄せ -->
+        <div class="flex-grow-1 d-flex justify-content-center">
+          <%= render "layouts/search" %>
+        </div>
+        <!-- ③ 右側：ログイン中のみ、または未ログイン時のリンク -->
+        <div class="d-flex align-items-center ms-auto">
+        <%= link_to "upload", new_content_path, class: "btn btn-light btn-sm mx-2", style:"opacity:80%;" %>
+          <% if logged_in? %>
+            <!-- ユーザードロップダウン -->
+            <div class="dropdown">
+              <a id="dropdownButton" class="d-flex align-items-center text-decoration-none dropdown-toggle text-dark"
+                href="#" id="userDropdown" role="button"
+                data-bs-toggle="dropdown" aria-expanded="false">
+                <% if current_user.avatar.attached? %>
+                  <%= image_tag current_user.avatar.variant(resize_to_fill: [32,32]),
+                    class: "rounded-circle", alt: "#{current_user.name}のアバター" %>
+                <% else %>
+                  <%= image_tag "noimage.png", size: "32x32",
+                    class: "rounded-circle", alt: "デフォルトアバター" %>
+                <% end %>
+                <span class="px-2"><strong><%= current_user.name %></strong></span>
+              </a>
+
+              <ul id="dropdownMenu" class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                <li><%= link_to "My page", user_path(current_user), class: "dropdown-item text-dark" %></li>
+                <li><%= link_to "Logout", logout_path, method: :delete, id: "sign-out", class: "dropdown-item text-dark", data: { turbo: false }  %></li>
+              </ul>
+            </div>
+          <% else %>
+            <!-- 未ログイン時はログインリンクだけ -->
+            <%= link_to "Login", login_path, class: "btn btn-sm btn-outline-dark w-100" %>
+          <% end %>
+        </div>
+      </div>
+    </nav>
+
+      <div class="container my-4">
+        <!-- カテゴリ絞り込みナビ -->
+        <ul class="nav nav-pills mb-4 justify-content-center">
+          <li class="nav-item">
+            <%= link_to "All", contents_path, 
+                  class: "nav-link #{'active' if params[:category_id].blank?}" %>
+          </li>
+          <% @categories.each do |cat| %>
+            <li class="nav-item">
+              <%= link_to cat.name, contents_path(category_id: cat.id),
+                    class: "nav-link #{'active' if params[:category_id].to_i == cat.id}" %>
+            </li>
+          <% end %>
+        </ul>
+
+        <!-- コンテンツ一覧 -->
+        <div class="row">
+          <%= yield %>
+        </div>
+      </div>
+  <% end %>
+
+  <!-- フッター-->
+  <footer class="footer mt-auto py-2 bg-light">
+    <div class="container text-center">
+      <small class="text-muted">All rights reserved by MeRock</small>
+    </div>
+  </footer>
+
+  <%# <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js" integrity="sha384-fbbOQedDUMZZ5KreZpsbe1LCZPVmfTnH7ois6mU1QK+m14rQ1l2bGBq41eYeM/fS" crossorigin="anonymous"></script> %>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+</body>
+</html>

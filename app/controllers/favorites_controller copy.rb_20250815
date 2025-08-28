@@ -1,0 +1,29 @@
+class FavoritesController < ApplicationController
+    before_action :logged_in_user, only:[:new, :edit, :update, :destroy]
+
+    def create
+        content = Content.find(params[:content_id])
+        favorite = current_user.favorites.new(content_id: content.id)
+        respond_to do |format|
+            if favorite.save
+                format.turbo_stream { render turbo_stream: turbo_stream.update("content_#{content.id}_favorite", partial: 'contents/favorite', locals: { content: content }) }
+            else
+                format.html { redirect_to content, alert: 'Failed to favorite.' }
+            end
+        end
+    end
+
+    def destroy
+        content = Content.find(params[:content_id])
+        favorite = current_user.favorites.find_by(content_id: params[:content_id])
+        respond_to do |format|
+            if favorite.destroy
+                format.turbo_stream do
+                    render turbo_stream: turbo_stream.update("content_#{content.id}_favorite", partial: 'contents/favorite', locals: { content: content })
+                end
+            else
+                format.html { redirect_to content, alert: 'Failed to unfavorite.' }
+            end
+        end
+    end
+end

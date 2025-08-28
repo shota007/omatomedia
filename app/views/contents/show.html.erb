@@ -1,0 +1,60 @@
+<%# app/views/contents/show.html.erb %>
+<div class="mb-3 p-3 m-auto" style="width: 500px;">
+    <%= render partial: "contents/content", locals: { content: @content, show_full: true } %>
+
+    <%# content delete %>
+    <% if logged_in? && current_user.id == @content.user_id %>
+        <%= link_to " 編集", edit_content_path(@content), class: "link fa-solid fa-pen-to-square mt-2", style:"color: gray; font-size:14px;" %>
+        <div type="button" data-bs-toggle="modal" data-bs-target="#exampleModal" class="d-inline-block fa-solid fa-trash mx-3 mt-2" style="color: gray; font-size:14px;"> 削除</div>
+        <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body">
+                        削除しますか？
+                        <button type="button" class="btn btn-secondary btn-sm w-25 m-3" data-bs-dismiss="modal">Cancel</button>
+                        <%= link_to "Delete", content_path(@content), data: { turbo_method: :delete }, class: "btn btn-danger btn-sm w-25 m-3" %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <% end %>
+    
+    <%# コメント投稿フォーム %>
+    <% if logged_in? %>
+        <%= form_with url: comments_path, method: :post, local: true, class: "input-group my-4 w-75" do |f| %>
+            <%= f.hidden_field :content_id, value: @content.id %>
+            <%= f.text_field :comment, placeholder: "コメントする...", class: "form-control", aria: { label: "コメント入力" } %>
+            <button class="btn btn-outline-secondary" type="submit">送信</button>
+        <% end %>
+    <% end %>
+
+    <%# コメント表示 %>
+    <% @comments.each do |comment| %>
+        <div class="d-flex align-items-start mt-4 content_avatar">
+            <div class="d-flex align-items-start flex-grow-1">
+                <div class="flex-shrink-0">
+                    <% if comment.user.avatar.attached? %>
+                        <%= image_tag(comment.user.avatar, size: "45x45", class: "rounded-circle d-inline-block") %>&nbsp;
+                    <% else %>
+                        <%= image_tag("noimage.png", size: "45x45", class: "rounded-circle d-inline-block") %>&nbsp;
+                    <% end %>
+                </div>
+                <div class="ms-3">
+                    <div>
+                        <strong><%= comment.user.name %></strong>
+                        <span class="text-muted small"><%= comment.created_at.strftime("%F") %></span>
+                    </div>
+                    <div><%= comment.comment %></div>
+                </div>
+            </div>
+        
+            <%# コメント削除 %>
+            <% if logged_in? && current_user.id == comment.user_id %>          
+                <%= link_to comment_path(comment), data: { turbo_method: :delete }, class: "ms-auto text-dark small", title: "コメントを削除" do %>
+                    <i class="fa-solid fa-trash"></i>                        
+                <% end %>
+            <% end %>
+        </div>
+    <% end %>
+    <hr>
+</div>

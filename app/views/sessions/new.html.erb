@@ -1,0 +1,31 @@
+<div class="d-flex align-items-center" style="height: 100%;">
+  <div class="m-auto text-center" style="width: 300px;">
+    <div class="login-container mt-3">
+      <h1 class="h3 mb-3">Login</h1>
+        <form id="sign-in-form">
+          <div class="input-gr">
+            <label for="email">Email</label>
+            <input type="email" id="email" required />
+          </div>
+          <div class="input-gr">
+            <label for="password">Password</label>
+            <input type="password" id="password" required />
+          </div>
+          <div class="error_message">
+            <p id="error_message"></p>
+          </div>
+          <div class="button-gr">
+            <button type="submit">Login</button>
+          </div>
+        </form>
+        <br>
+				<div id="firebaseui-auth-container"></div>
+				<br>
+          <div class="fw-normal my-1">
+            <%= link_to "アカウント登録", new_user_path, style: "text-decoration:none; font-size: 14px; margin-bottom: 10px;" %>
+            <br>
+            <%= link_to "パスワードを忘れた", edit_password_users_path, style: "text-decoration:none; font-size: 14px;" %> 
+          </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,161 @@
+class ContentsController < ApplicationController
+  before_action :logged_in_user, only:[:new, :edit, :update, :destroy]
+  before_action :content_user, only:[:edit, :update, :destroy]
+  before_action :set_categories, only: [:index]
+  require 'google/apis/youtube_v3'
+  require 'open-uri'
+  require 'open3'
+
+  def index
+    if params[:word]
+      @contents = Content.looks(params[:word])
+    else
+      @contents = Content.all
+    end
+      @contents = @contents.order(created_at: :desc)
+      @contents = if params[:category_id].present?
+                  Content.where(category_id: params[:category_id]).order(created_at: :desc)
+                else
+                  Content.all.order(created_at: :desc)
+                end
+  end
+
+  def new
+    @content       = Content.new
+    @youtube_title = nil
+    @thum_path     = nil
+  
+    if params[:youtube_url].present?
+      @content.youtube_url = params[:youtube_url]
+      youtube_id = CGI.parse(URI(@content.youtube_url).query)["v"].first
+  
+      svc = Google::Apis::YoutubeV3::YouTubeService.new
+      svc.key = ENV["GOOGLE_CLIENT_API_KEY"]
+      snippet = svc.list_videos(:snippet, id: youtube_id).items.first.snippet
+  
+      @youtube_id    = youtube_id
+      @youtube_title = snippet.title
+      @thum_path     = "https://img.youtube.com/vi/#{youtube_id}/hqdefault.jpg"
+    end
+  end
+
+  def create
+    if youtube_auto?
+      url        = params[:content][:youtube_url]
+      youtube_id = CGI.parse(URI(url).query)['v'].first
+
+      # ① build → フラグを立て → バリデーションスキップで保存
+      @content = current_user.contents.build(
+        youtube_url: url,
+        youtube_id:  youtube_id,
+        title:       fetch_youtube_title(youtube_id)
+      )
+      @content.skip_post_process_validations = true
+      @content.save!(validate: false)
+
+      # ② サムネイル取得
+      thumb = URI.open("https://img.youtube.com/vi/#{youtube_id}/hqdefault.jpg")
+      @content.img_file.attach(io: thumb, filename: "#{youtube_id}.jpg", content_type: 'image/jpeg')
+      Rails.logger.debug ">> thumbnail open success: #{thumb.size} bytes"
+      Rails.logger.debug ">> thumbnail open success: #{thumb.size} bytes"
+
+      # ③ 音声ダウンロード＆変換
+      audio_url = `yt-dlp -g -f bestaudio #{Shellwords.escape(url)}`.strip
+      wav = Tempfile.new(['audio', '.wav'])
+      begin
+        wav.binmode
+        system('ffmpeg', '-y', '-i', audio_url, '-vn', '-ar', '16000', '-ac', '1', '-f', 'wav', wav.path)
+
+        # ActiveStorage に attach
+        @content.audio_file.attach(
+          io:           File.open(wav.path),
+          filename:     "#{youtube_id}.wav",
+          content_type: 'audio/wav'
+        )
+
+        # ④ 文字起こし＆要約
+        transcript = transcribe(wav.path)
+        summary    = summarize(transcript)
+        @content.update_columns(transcribed_text: transcript,
+                        summarized_text:  summary)
+
+        redirect_to @content, notice: 'YouTube から自動登録しました' and return
+      ensure
+        wav.close
+        wav.unlink
+      end
+    end
+
+  # ——————————————————
+  # ファイルアップロード版（通常ルート）
+  @content = current_user.contents.new(content_params)
+  if @content.save
+    redirect_to @content, notice: '登録しました'
+  else
+    render :new, status: :unprocessable_entity
+  end
+  
+  rescue => e
+    logger.error e.full_message
+    flash.now[:danger] = "処理中にエラーが発生しました: #{e.message}"
+    render :new, status: :unprocessable_entity
+  end
+
+  def show
+    @content = Content.find(params[:id])
+    @comment = Comment.new
+    @comments = Comment.where(content_id: @content.id)
+    @user = User.find(@content.user_id)
+  end
+
+  def share
+    @content = Content.find(params[:id])
+    @comment = Comment.new
+    @comments = Comment.where(content_id: @content.id)
+    @user = User.find(@content.user_id)
+  end
+
+  def edit
+  end
+
+  def update
+    if @content.update(content_params)
+        redirect_to content_path(@content), success:'更新しました'
+    else
+        flash.now[:danger] = '失敗しました'
+        render :edit
+    end
+  end
+
+  def destroy
+    @content.destroy!
+    redirect_to current_user, status: :see_other, success: '削除しました' 
+  end
+
+  def fetch_youtube_title(video_id)
+    svc = Google::Apis::YoutubeV3::YouTubeService.new
+    svc.key = ENV['GOOGLE_CLIENT_API_KEY']
+    snippet = svc.list_videos(:snippet, id: video_id).items.first.snippet
+    snippet.title
+  end
+
+  private
+  def content_params
+    params.fetch(:content, {}).permit(:youtube_url, :youtube_id, :title, :img_file, :audio_file, :category_id, :transcribed_text, :summarized_text, :remove_img_file)
+  end
+
+  def content_user
+    @content = Content.find(params[:id])
+    unless current_user.id == @content.user_id
+      redirect_to current_user
+    end
+  end
+
+  def youtube_auto?
+    params.dig(:content, :youtube_url).present? && params.dig(:content, :audio_file).blank?
+  end
+
+  def set_categories
+    @categories = Category.order(:position)
+  end
+end

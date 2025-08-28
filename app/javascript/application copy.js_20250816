@@ -1,0 +1,10 @@
+// app/javascript/application.js
+import "@hotwired/turbo-rails"
+import "rails-ujs"
+import "bootstrap"
+import * as Popper from "@popperjs/core"
+import "preview"
+import "auth_signup_password"
+import "dropdown"
+import "nprogress_init"
+import "update_password"

@@ -1,0 +1,106 @@
+<!-- app/views/users/finish_sign_up.html.erb -->
+<div class="d-flex align-items-center" style="height: 100%;">
+  <div class="m-auto text-center" style="width: 300px;">
+    <div class="register-container">
+      <div class="container py-5 text-center">
+        <h3 class="mb-3">アカウント登録</h3>
+        <div id="invalid-link" class="text-danger" style="display:none; font-size:12px;">
+          <br>不正なリンクです。<br>
+          もう一度アカウント登録から始めてください。<br><br>
+          <%= link_to "アカウント登録", new_user_path, style: "text-decoration:none; font-size: 14px; margin-bottom: 10px;" %>
+        </div>
+        <form id="complete-signup-form" style="display:none; max-width: 400px; margin: auto;">
+          <div class="mb-3">
+            <input type="text" id="name" class="form-control" placeholder="お名前" required>
+          </div>
+          <div class="mb-3">
+            <input type="password" id="password" class="form-control" placeholder="パスワード" required minlength="6">
+          </div>
+          <div class="mb-3">
+            <input type="password" id="password_confirmation" class="form-control" placeholder="パスワード（確認）" required minlength="6">
+          </div>
+          <button type="submit" class="btn w-50" style="background-color:#FAD02C; border-color:#FAD02C;">
+            登録を完了する
+          </button>
+        </form>
+        <p id="status" class="mt-3 text-danger"></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import {
+  getAuth,
+  isSignInWithEmailLink,
+  signInWithEmailLink
+} from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+
+const auth = getAuth();
+const url  = window.location.href;
+
+// 1) メールリンクかチェック
+if (isSignInWithEmailLink(auth, url)) {
+  // 2) localStorage からメールアドレスを取得
+  let email = window.localStorage.getItem("emailForRegistration");
+  if (!email) {
+    email = window.prompt("確認用にメールアドレスを入力してください");
+  }
+
+  // 3) Firebase 上でリンク認証を完了
+  signInWithEmailLink(auth, email, url)
+    .then(() => {
+      // 認証成功 → 完了フォームを表示
+      document.getElementById("complete-signup-form").style.display = "block";
+      // フォーム送信ハンドラをセット
+      document.getElementById("complete-signup-form").addEventListener("submit", async e => {
+        e.preventDefault();
+        const name  = document.getElementById("name").value;
+        const pw    = document.getElementById("password").value;
+        const pw2   = document.getElementById("password_confirmation").value;
+        const statusEl = document.getElementById("status");
+
+        if (pw !== pw2) {
+          statusEl.textContent = "パスワードが一致しません。";
+          return;
+        }
+
+        const csrf = document.querySelector('[name="csrf-token"]').content;
+        try {
+          // 4) Rails に POST して本登録
+          const resp = await fetch("/users", {
+            method:  "POST",
+            headers: {
+              "Content-Type":   "application/json",
+              "X-CSRF-Token":    csrf,
+              "Accept":          "application/json"
+            },
+            body: JSON.stringify({
+              user: {
+                name:                  name,
+                email:                 email,
+                password:              pw,
+                password_confirmation: pw2
+              }
+            })
+          });
+          if (resp.redirected) {
+            window.location.href = resp.url; // Rails 側で root にリダイレクト
+          } else {
+            const json = await resp.json();
+            statusEl.textContent = (json.errors || ["登録に失敗しました"]).join("、");
+          }
+        } catch (err) {
+          statusEl.textContent = "通信エラーが発生しました。";
+          console.error(err);
+        }
+      });
+    })
+    .catch(err => {
+      console.error(err);
+      document.getElementById("invalid-link").style.display = "block";
+    });
+} else {
+  document.getElementById("invalid-link").style.display = "block";
+}
+</script>
