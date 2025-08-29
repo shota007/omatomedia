@@ -53,3 +53,13 @@ cat >> .gitignore <<'EOF'
 /.byebug_history
 .DS_Store
 EOF
+
+# editor backup/copy files
+* copy *.rb
+* copy *.erb
+* copy *.js
+* copy *.css
+* copy *
+*~
+*.swp
+.DS_Store
