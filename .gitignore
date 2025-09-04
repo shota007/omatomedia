@@ -62,4 +62,4 @@ EOF
 * copy *
 *~
 *.swp
-.DS_Store
+.DS_Store.env
