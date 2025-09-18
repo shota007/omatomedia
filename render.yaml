@@ -12,11 +12,8 @@ services:
     region: oregon
 
     # ビルド/起動
-    buildCommand: |
-      bundle install
-      bundle exec rake assets:precompile
-    startCommand: |
-      bundle exec puma -t 5:5 -p ${PORT:-3000} -e production
+    buildCommand: bundle install && bundle exec rake assets:precompile
+    startCommand: bundle exec puma -t 5:5 -p ${PORT:-3000} -e ${RACK_ENV:-production}
 
     # デプロイ後に migrate を実行（毎デプロイ実行されても安全）
     postDeployCommand: |
@@ -27,6 +24,8 @@ services:
 
     envVars:
       - key: RAILS_ENV
+        value: production
+      - key: RACK_ENV
         value: production
 
       # Rails の secret_key_base は Render に生成してもらう
@@ -48,3 +47,6 @@ services:
       #   value: ap-northeast-1
       # - key: S3_BUCKET
       #   value: your-bucket
+
+    deploy:
+      preDeployCommand: bundle exec rails db:migrate
