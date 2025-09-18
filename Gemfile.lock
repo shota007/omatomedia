@@ -216,9 +216,12 @@ GEM
     nokogiri (1.14.2)
       mini_portile2 (~> 2.8.0)
       racc (~> 1.4)
+    nokogiri (1.14.2-x86_64-linux)
+      racc (~> 1.4)
     os (1.1.4)
     pg (1.6.2)
     pg (1.6.2-x86_64-darwin)
+    pg (1.6.2-x86_64-linux)
     popper_js (2.11.8)
     public_suffix (5.0.1)
     puma (5.6.5)
@@ -301,6 +304,7 @@ GEM
     sqlite3 (1.7.3)
       mini_portile2 (~> 2.8.0)
     sqlite3 (1.7.3-x86_64-darwin)
+    sqlite3 (1.7.3-x86_64-linux)
     stimulus-rails (1.2.1)
       railties (>= 6.0.0)
     streamio-ffmpeg (3.0.2)
@@ -340,6 +344,7 @@ GEM
 PLATFORMS
   ruby
   x86_64-darwin-21
+  x86_64-linux
 
 DEPENDENCIES
   acts-as-taggable-on
