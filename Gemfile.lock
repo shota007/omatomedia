@@ -217,6 +217,8 @@ GEM
       mini_portile2 (~> 2.8.0)
       racc (~> 1.4)
     os (1.1.4)
+    pg (1.6.2)
+    pg (1.6.2-x86_64-darwin)
     popper_js (2.11.8)
     public_suffix (5.0.1)
     puma (5.6.5)
@@ -296,8 +298,9 @@ GEM
       actionpack (>= 5.2)
       activesupport (>= 5.2)
       sprockets (>= 3.0.0)
-    sqlite3 (1.6.2)
+    sqlite3 (1.7.3)
       mini_portile2 (~> 2.8.0)
+    sqlite3 (1.7.3-x86_64-darwin)
     stimulus-rails (1.2.1)
       railties (>= 6.0.0)
     streamio-ffmpeg (3.0.2)
@@ -336,6 +339,7 @@ GEM
 
 PLATFORMS
   ruby
+  x86_64-darwin-21
 
 DEPENDENCIES
   acts-as-taggable-on
@@ -353,13 +357,14 @@ DEPENDENCIES
   jquery-rails
   mini_magick
   nio4r (>= 2.5.9)
+  pg (~> 1.5)
   puma (~> 5.0)
   rails (~> 7.0.4, >= 7.0.4.2)
   rails-i18n
   ruby-openai
   selenium-webdriver
   sprockets-rails
-  sqlite3 (~> 1.4)
+  sqlite3 (~> 1.7)
   stimulus-rails
   streamio-ffmpeg
   terrapin
