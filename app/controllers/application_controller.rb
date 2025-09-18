@@ -1,5 +1,7 @@
 class ApplicationController < ActionController::Base
   before_action :load_categories
+
+  
   include SessionsHelper
   require 'streamio-ffmpeg'
 
@@ -95,7 +97,13 @@ class ApplicationController < ActionController::Base
 
     def load_categories
       # @categories = Category.order(:id)
-      @categories = Category.reorder(:position)
+      @categories =
+      if ActiveRecord::Base.connection.data_source_exists?('categories')
+        Category.order(:position)
+      else
+        []
+      end
+      rescue ActiveRecord::NoDatabaseError, ActiveRecord::StatementInvalid
+        @categories = []      
     end
-     
 end

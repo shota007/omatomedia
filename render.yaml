@@ -1,0 +1,50 @@
+# render.yaml
+databases:
+  - name: omatomedia-db
+    plan: free
+    region: oregon
+
+services:
+  - type: web
+    name: omatomedia
+    env: ruby
+    plan: free
+    region: oregon
+
+    # ビルド/起動
+    buildCommand: |
+      bundle install
+      bundle exec rake assets:precompile
+    startCommand: |
+      bundle exec puma -t 5:5 -p ${PORT:-3000} -e production
+
+    # デプロイ後に migrate を実行（毎デプロイ実行されても安全）
+    postDeployCommand: |
+      bundle exec rails db:migrate
+
+    # 健康チェック（任意。/up が無ければ "/" に）
+    healthCheckPath: "/"
+
+    envVars:
+      - key: RAILS_ENV
+        value: production
+
+      # Rails の secret_key_base は Render に生成してもらう
+      - key: SECRET_KEY_BASE
+        generateValue: true
+
+      # Render の DB 接続文字列を DATABASE_URL に流し込む
+      - key: DATABASE_URL
+        fromDatabase:
+          name: omatomedia-db
+          property: connectionString
+
+      # （S3 等を使うならここに追加）
+      # - key: AWS_ACCESS_KEY_ID
+      #   sync: false
+      # - key: AWS_SECRET_ACCESS_KEY
+      #   sync: false
+      # - key: AWS_REGION
+      #   value: ap-northeast-1
+      # - key: S3_BUCKET
+      #   value: your-bucket
